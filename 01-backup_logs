@@ -1,5 +1,6 @@
-from datetime import datetime
 import shutil
+import tempfile
+from datetime import datetime
 import os
 import time
 
@@ -12,15 +13,18 @@ if not os.path.exists(backup_destination):
 
 start_time = time.time()
 
-current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-
-backup_filename = f"backup_{current_time}.tar.gz"
-backup_filepath = os.path.join(backup_destination, backup_filename)
-
-shutil.make_archive(backup_filepath, 'gztar', root_dir="/", base_dir="/var/log")
+with tempfile.TemporaryDirectory() as tmpdirname:
+    for log_path in logs_directories:
+        if os.path.isfile(log_path):
+            shutil.copy(log_path, tmpdirname)
+    
+    current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    backup_filename = f"backup_{current_time}.tar.gz"
+    backup_filepath = os.path.join(backup_destination, backup_filename)
+    
+    shutil.make_archive(backup_filepath, 'gztar', root_dir=tmpdirname)
 
 end_time = time.time()
 elapsed_time = end_time - start_time
 
-print("Backup created at:", backup_filepath)
-print("Elapsed time:", elapsed_time, "seconds")
+backup_filepath, elapsed_time
